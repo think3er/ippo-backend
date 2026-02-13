@@ -1,0 +1,206 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── User ────────────────────────────────────────────
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  name          String
+  handle        String   @unique
+  avatarUrl     String?  @map("avatar_url")
+  timezone      String   @default("UTC")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  ownedCircles    Circle[]          @relation("CircleOwner")
+  memberships     CircleMember[]
+  checkIns        DailyCheckIn[]
+  reflections     WeeklyReflection[]
+  refreshTokens   RefreshToken[]
+  clips           CircleClip[]      @relation("ClipPoster")
+  clipDuty        ClipRotation[]    @relation("CurrentClipDuty")
+  pillarJournals  PillarJournal[]
+  journalComments JournalComment[]
+
+  @@map("users")
+}
+
+// ─── Refresh Token ───────────────────────────────────
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("refresh_tokens")
+}
+
+// ─── Circle ──────────────────────────────────────────
+enum VisibilityMode {
+  score_only
+  detailed
+  custom
+}
+
+model Circle {
+  id             String         @id @default(uuid())
+  name           String
+  description    String?
+  ownerId        String         @map("owner_id")
+  owner          User           @relation("CircleOwner", fields: [ownerId], references: [id])
+  inviteCode     String         @unique @map("invite_code")
+  visibilityMode VisibilityMode @default(score_only) @map("visibility_mode")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  members        CircleMember[]
+  checkIns       DailyCheckIn[]
+  reflections    WeeklyReflection[]
+  clips          CircleClip[]
+  clipRotation   ClipRotation?
+  pillarJournals PillarJournal[]
+
+  @@map("circles")
+}
+
+// ─── Circle Membership ───────────────────────────────
+enum MemberRole {
+  owner
+  admin
+  member
+}
+
+model CircleMember {
+  id       String     @id @default(uuid())
+  circleId String     @map("circle_id")
+  circle   Circle     @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  userId   String     @map("user_id")
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role     MemberRole @default(member)
+  joinedAt DateTime   @default(now()) @map("joined_at")
+
+  @@unique([circleId, userId])
+  @@map("circle_members")
+}
+
+// ─── Daily Check-In ──────────────────────────────────
+model DailyCheckIn {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  circleId    String   @map("circle_id")
+  circle      Circle   @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  date        String
+  deen        Boolean  @default(false)
+  body        Boolean  @default(false)
+  mind        Boolean  @default(false)
+  mission     Boolean  @default(false)
+  brotherhood Boolean  @default(false)
+  score       Int      @default(0)
+  notePrivate String?  @map("note_private")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, circleId, date])
+  @@map("daily_checkins")
+}
+
+// ─── Weekly Reflection ───────────────────────────────
+model WeeklyReflection {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  circleId      String   @map("circle_id")
+  circle        Circle   @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  weekStartDate String   @map("week_start_date")
+  slipFawda     String?  @map("slip_fawda")
+  didWell       String?  @map("did_well")
+  nextFocus     String?  @map("next_focus")
+  gratitude     String?
+  isShared      Boolean  @default(true) @map("is_shared")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, circleId, weekStartDate])
+  @@map("weekly_reflections")
+}
+
+// ─── Pillar Enum ─────────────────────────────────────
+enum PillarType {
+  deen
+  body
+  mind
+  mission
+  brotherhood
+}
+
+// ─── Circle Clips ────────────────────────────────────
+model CircleClip {
+  id         String    @id @default(uuid())
+  circleId   String    @map("circle_id")
+  circle     Circle    @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  postedById String    @map("posted_by_id")
+  postedBy   User      @relation("ClipPoster", fields: [postedById], references: [id])
+  videoUrl   String    @map("video_url")
+  title      String?
+  caption    String?
+  isActive   Boolean   @default(true) @map("is_active")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@map("circle_clips")
+}
+
+// ─── Clip Rotation ───────────────────────────────────
+model ClipRotation {
+  id            String   @id @default(uuid())
+  circleId      String   @unique @map("circle_id")
+  circle        Circle   @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  currentUserId String   @map("current_user_id")
+  currentUser   User     @relation("CurrentClipDuty", fields: [currentUserId], references: [id])
+  rotationOrder String[] @map("rotation_order")
+  lastRotatedAt DateTime @default(now()) @map("last_rotated_at")
+  intervalDays  Int      @default(3) @map("interval_days")
+
+  @@map("clip_rotations")
+}
+
+// ─── Pillar Journal (Shared Blog Posts) ──────────────
+// Shared with the entire circle — everyone can read and comment
+model PillarJournal {
+  id        String           @id @default(uuid())
+  userId    String           @map("user_id")
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  circleId  String           @map("circle_id")
+  circle    Circle           @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  pillar    PillarType
+  title     String?
+  content   String
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  comments  JournalComment[]
+
+  @@map("pillar_journals")
+}
+
+// ─── Journal Comment ─────────────────────────────────
+model JournalComment {
+  id        String        @id @default(uuid())
+  journalId String        @map("journal_id")
+  journal   PillarJournal @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  userId    String        @map("user_id")
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@map("journal_comments")
+}

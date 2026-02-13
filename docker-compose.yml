@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sahwa
+      POSTGRES_PASSWORD: sahwa_dev
+      POSTGRES_DB: sahwa_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - sahwa_pgdata:/var/lib/postgresql/data
+
+  api:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://sahwa:sahwa_dev@db:5432/sahwa_db?schema=public"
+      JWT_SECRET: "change-this-to-a-long-random-secret-in-production"
+      JWT_ACCESS_EXPIRY: "15m"
+      JWT_REFRESH_EXPIRY: "7d"
+      PORT: "3000"
+      NODE_ENV: development
+    volumes:
+      - ./src:/app/src
+    command: npm run dev
+
+volumes:
+  sahwa_pgdata:
