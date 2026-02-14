@@ -11,6 +11,4 @@ RUN npx prisma generate
 COPY tsconfig.json ./
 COPY src ./src
 
-EXPOSE 3000
-
-CMD ["npm", "run", "dev"]
+CMD npx prisma migrate deploy && npx tsx src/index.ts
