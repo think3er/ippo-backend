@@ -86,6 +86,7 @@ export const pillarJournalSchema = z.object({
   pillar: z.enum(["deen", "body", "mind", "mission", "brotherhood"]),
   title: z.string().max(200).optional(),
   content: z.string().min(1).max(10000),
+  imageUrl: z.string().url().optional(),
 });
 
 export const getJournalsSchema = z.object({

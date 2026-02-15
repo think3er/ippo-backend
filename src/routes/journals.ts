@@ -20,6 +20,7 @@ router.post("/:id/journals", requireCircleMember, async (req: Request, res: Resp
         pillar: data.pillar,
         title: data.title,
         content: data.content,
+        imageUrl: data.imageUrl,
       },
       include: {
         user: { select: { id: true, name: true, handle: true, avatarUrl: true } },
