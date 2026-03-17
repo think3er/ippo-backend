@@ -6,6 +6,7 @@ import circleRoutes from "./routes/circles";
 import checkInRoutes from "./routes/checkins";
 import clipRoutes from "./routes/clips";
 import journalRoutes from "./routes/journals";
+import notificationRoutes from "./routes/notifications";
 
 // Run migrations on startup
 try {
@@ -31,6 +32,7 @@ app.use("/circles", circleRoutes);
 app.use("/circles", checkInRoutes);
 app.use("/circles", clipRoutes);
 app.use("/circles", journalRoutes);
+app.use("/notifications", notificationRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Ippo API running on port ${PORT}`);

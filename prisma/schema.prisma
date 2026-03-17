@@ -7,7 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─── User ────────────────────────────────────────────
 model User {
   id            String   @id @default(uuid())
   email         String   @unique
@@ -16,6 +15,7 @@ model User {
   handle        String   @unique
   avatarUrl     String?  @map("avatar_url")
   timezone      String   @default("UTC")
+  pushEnabled   Boolean  @default(true) @map("push_enabled")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
@@ -28,11 +28,23 @@ model User {
   clipDuty        ClipRotation[]    @relation("CurrentClipDuty")
   pillarJournals  PillarJournal[]
   journalComments JournalComment[]
+  journalLikes    JournalLike[]
+  deviceTokens    DeviceToken[]
 
   @@map("users")
 }
 
-// ─── Refresh Token ───────────────────────────────────
+model DeviceToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  platform  String   @default("ios")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("device_tokens")
+}
+
 model RefreshToken {
   id        String   @id @default(uuid())
   token     String   @unique
@@ -44,7 +56,6 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
-// ─── Circle ──────────────────────────────────────────
 enum VisibilityMode {
   score_only
   detailed
@@ -72,7 +83,6 @@ model Circle {
   @@map("circles")
 }
 
-// ─── Circle Membership ───────────────────────────────
 enum MemberRole {
   owner
   admin
@@ -92,7 +102,6 @@ model CircleMember {
   @@map("circle_members")
 }
 
-// ─── Daily Check-In ──────────────────────────────────
 model DailyCheckIn {
   id          String   @id @default(uuid())
   userId      String   @map("user_id")
@@ -114,7 +123,6 @@ model DailyCheckIn {
   @@map("daily_checkins")
 }
 
-// ─── Weekly Reflection ───────────────────────────────
 model WeeklyReflection {
   id            String   @id @default(uuid())
   userId        String   @map("user_id")
@@ -134,7 +142,6 @@ model WeeklyReflection {
   @@map("weekly_reflections")
 }
 
-// ─── Pillar Enum ─────────────────────────────────────
 enum PillarType {
   deen
   body
@@ -143,7 +150,6 @@ enum PillarType {
   brotherhood
 }
 
-// ─── Circle Clips ────────────────────────────────────
 model CircleClip {
   id         String    @id @default(uuid())
   circleId   String    @map("circle_id")
@@ -159,7 +165,6 @@ model CircleClip {
   @@map("circle_clips")
 }
 
-// ─── Clip Rotation ───────────────────────────────────
 model ClipRotation {
   id            String   @id @default(uuid())
   circleId      String   @unique @map("circle_id")
@@ -173,8 +178,6 @@ model ClipRotation {
   @@map("clip_rotations")
 }
 
-// ─── Pillar Journal (Shared Blog Posts) ──────────────
-// Shared with the entire circle — everyone can read and comment
 model PillarJournal {
   id        String           @id @default(uuid())
   userId    String           @map("user_id")
@@ -189,11 +192,23 @@ model PillarJournal {
   updatedAt DateTime         @updatedAt @map("updated_at")
 
   comments  JournalComment[]
+  likes     JournalLike[]
 
   @@map("pillar_journals")
 }
 
-// ─── Journal Comment ─────────────────────────────────
+model JournalLike {
+  id        String        @id @default(uuid())
+  journalId String        @map("journal_id")
+  journal   PillarJournal @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  userId    String        @map("user_id")
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@unique([journalId, userId])
+  @@map("journal_likes")
+}
+
 model JournalComment {
   id        String        @id @default(uuid())
   journalId String        @map("journal_id")
