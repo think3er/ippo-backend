@@ -48,7 +48,7 @@ router.post("/:id/meals/analyze", requireCircleMember, async (req: Request, res:
             },
             {
               type: "text",
-              text: 'Analyze this food photo. Respond ONLY with a JSON object, no markdown, no backticks, no other text:\n{"foodName": "name of the dish/food", "calories": estimated_calories_number, "protein": estimated_protein_grams_number}\n\nBe specific with the food name. Give your best estimate for a single serving. Only return the raw JSON object.',
+              text: 'Look carefully at this food photo. Identify exactly what food is shown — do not guess or assume. Describe what you actually see on the plate/bowl.\n\nRespond ONLY with a JSON object, no markdown, no backticks, no explanation:\n{"foodName": "specific name of the visible food", "calories": estimated_total_calories_as_number, "protein": estimated_total_protein_in_grams_as_number}\n\nRules:\n- Name the food based on what you SEE, not what you assume\n- If it is rice with meat, say "Rice with [type of meat]"\n- Estimate calories and protein for the portion shown in the photo\n- Only return the raw JSON object, nothing else',
             },
           ],
         }],
