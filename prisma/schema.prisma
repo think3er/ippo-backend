@@ -56,11 +56,7 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
-enum VisibilityMode {
-  score_only
-  detailed
-  custom
-}
+enum VisibilityMode { score_only; detailed; custom }
 
 model Circle {
   id             String         @id @default(uuid())
@@ -83,11 +79,7 @@ model Circle {
   @@map("circles")
 }
 
-enum MemberRole {
-  owner
-  admin
-  member
-}
+enum MemberRole { owner; admin; member }
 
 model CircleMember {
   id       String     @id @default(uuid())
@@ -142,13 +134,7 @@ model WeeklyReflection {
   @@map("weekly_reflections")
 }
 
-enum PillarType {
-  deen
-  body
-  mind
-  mission
-  brotherhood
-}
+enum PillarType { deen; body; mind; mission; brotherhood }
 
 model CircleClip {
   id         String    @id @default(uuid())
@@ -188,6 +174,10 @@ model PillarJournal {
   title     String?
   content   String
   imageUrl  String?          @map("image_url")
+  postType  String           @default("post") @map("post_type")
+  mealName  String?          @map("meal_name")
+  calories  Int?
+  protein   Int?
   createdAt DateTime         @default(now()) @map("created_at")
   updatedAt DateTime         @updatedAt @map("updated_at")
 
